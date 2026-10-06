@@ -56,6 +56,7 @@ def replace_pii(text: str) -> str:
     # Replace US social security numbers (XXX-XX-XXXX format)
     text = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', 'XXX-XX-XXXX', text)
     text = re.sub(r'\+1\d{10}\b', '+' + 'X' * 11, text)
+    return text
     # do we need this as well?
     # pass 
     
