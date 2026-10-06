@@ -58,7 +58,14 @@ class WarmupLearningRateScheduler:
 		#
 		# Returns:
 		#     float: Learning rate for the given step
-		pass
+		# pass
+		if self.warmup_steps <= 0:
+            return self.base_lr
+        if step <= 0:
+            return 0.0
+        if step >= self.warmup_steps:
+            return self.base_lr
+        return self.base_lr * (step / self.warmup_steps)
 		# ====================== Implement lr_at_step here ======================
 
 	def __call__(self, step: int) -> float:

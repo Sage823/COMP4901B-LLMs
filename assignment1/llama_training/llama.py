@@ -100,7 +100,20 @@ class Attention(nn.Module):
         
         #TODO
         # ====================== Implement compute_query_key_value_scores here ======================
-        pass
+        # pass
+        # why swap the last two axis? 
+        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.head_dim)
+
+        # create a mask
+        seqlen = query.size(2)
+        mask = torch.triu(torch.ones(seqlen, seqlen, dtype=torch.bool, device=query.device), diagonal=1)
+        scores = scores.masked_fill(mask, float('-inf'))
+
+        weights = F.softmax(scores, dim=-1)
+        weights = self.attn_dropout(weights)
+
+        return torch.matmul(weights, value)
+
         # ====================== Implement compute_query_key_value_scores here ======================
 
 
@@ -286,7 +299,8 @@ class Llama(LlamaPreTrainedModel):
                 # select the single most likely index
                 #TODO
                 # ====================== Implement greedy sampling here ======================
-                pass
+                # pass
+                idx_next = torch.argmax(logits_last, dim=-1, keepdim=True)
                 # ====================== Implement greedy sampling here ======================
             else:
                 '''
@@ -300,12 +314,17 @@ class Llama(LlamaPreTrainedModel):
                 if top_k is not None:
                     #TODO
                     # ====================== Implement top-k sampling here ======================
-                    pass
+                    # pass
+                    k = min(top_k, logits_work.size(-1))  # Ensure k does not exceed vocab size
+                    top_values, _ = torch.topk(logits_work, k, dim=-1)
+                    logits_work = logits_work.masked_fill(logits_work < top_values[:, [-1]], float('-inf'))
                     # ====================== Implement top-k sampling here ======================
 
                 #TODO
                 # ====================== Implement temperature sampling here ======================
-                pass
+                # pass
+                probs = F.softmax(logits_work / temperature, dim=-1)
+                idx_next = torch.multinomial(probs, num_samples=1)
                 # ====================== Implement temperature sampling here ======================
 
             # append sampled index to the running sequence and continue
