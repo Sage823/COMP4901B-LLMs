@@ -6,7 +6,9 @@ from utils import  read_warc_file, read_wet_file
 from datasets import load_dataset
 from typing import Set, Dict
 import string
+from bs4 import BeautifulSoup
 
+# we have todos below
 def retrieve_bad_words() -> set[str]:
     """Helper function - that reads a list of bad words from a file and returns them as a set.
     Returns:
@@ -25,17 +27,37 @@ def html_to_text(html) -> str:
     Returns:
         str: Plain text extracted from HTML.
     """
-    pass 
+
+    # ignore broken bytes instead of throwing error?
+    if isinstance(html, bytes):
+        html = html.decode('utf-8', errors='ignore')
+
+    # use beqautifulsoup? check guidebook
+    soup = BeautifulSoup(html, 'html.parser')
+
+    # delete tags whose contents are not article text?
+    # do we need more?
+    for tag in soup(['script', 'style', 'head', 'noscript']):
+        tag.decompose()
+    
+    #extract visible text, new line between block?
+    text = soup.get_text(separator='\n')
+    return text.strip() # remove blank space at start and end
+
+    # pass 
 
 def replace_pii(text: str) -> str:
     """Masks personally identifiable information (PII) from text with the specified masking formats.
     Args:
         text (str): Candidate text.
     Returns:
-        str: Text with PII obfuscated.
+        str: Text with PII obfuscated. ?
     """
     # Replace US social security numbers (XXX-XX-XXXX format)
-    pass 
+    text = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', 'XXX-XX-XXXX', text)
+    text = re.sub(r'\+1\d{10}\b', '+' + 'X' * 11, text)
+    # do we need this as well?
+    # pass 
     
 
 def clean_text(text: str) -> str:
@@ -45,7 +67,16 @@ def clean_text(text: str) -> str:
     Returns:
         str: cleaned document
     """
-    pass
+
+    kept = []
+    for paragraph in text.split("\n"):
+        if re.search(r'[A-Za-z0-9]{101,}', paragraph):
+            continue                                         # junk? -> skip
+        if not any(char in string.punctuation for char in paragraph):
+            continue                                         # no punctuation -> skip
+        kept.append(paragraph)                               
+    return "\n".join(kept)         
+    # pass
 
 
 def heuristic_quality_filter(text: str) -> bool:
@@ -55,7 +86,28 @@ def heuristic_quality_filter(text: str) -> bool:
     Returns:
         bool: returns True if the document passes the filters, False otherwise.
     """
-    pass 
+    # pass 
+        # gate 1: bad words? isn't this checked in clean_text? but we can check again
+    lowered = text.lower()
+    for bad_word in retrieve_bad_words():
+        if bad_word in lowered:
+            return False
+
+    # gate 2: punctuation
+    if not any(char in string.punctuation for char in text):
+        return False
+
+    # gate 3: something that is not whitespace
+    if len(text.strip()) == 0:
+        return False
+
+    # gate 4: >=80% of characters are alphanumeric/punctuation/whitespace
+    allowed = string.ascii_letters + string.digits + string.punctuation + string.whitespace
+    allowed_count = sum(1 for char in text if char in allowed)
+    if allowed_count / len(text) < 0.8:
+        return False
+
+    return True
 
 
 def is_english_text(text: str) -> bool:
@@ -65,7 +117,23 @@ def is_english_text(text: str) -> bool:
     Returns:
         bool: True if text is primarily English, False otherwise
     """
-    pass
+    # pass
+    letters = [c for c in text if c.isalpha()]          # keep only letters
+    if len(letters) < 20:                               # too short to judge
+        return False
+
+    ascii_letters = sum(1 for c in letters if ord(c) < 128)
+    if ascii_letters / len(letters) < 0.8:              # not Latin script
+        return False
+
+    words = re.findall(r"[A-Za-z']+", text)
+    if not words:
+        return False
+
+    common = {'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that',
+              'have', 'it', 'for', 'not', 'on', 'with', 'is', 'are', 'was', 'were'}
+    found = {w.lower() for w in words} & common          # & = what they share
+    return len(found) >= 2
     
 
 def deduplicate_texts(texts: list[str]) -> list[str]:
@@ -75,7 +143,24 @@ def deduplicate_texts(texts: list[str]) -> list[str]:
     Returns:
         list[str]: Deduplicated list of texts. Implemented a simple Jaccard similarity based deduplication.
     """
-    pass
+    # pass
+    def words(t):
+        return set(re.findall(r"[a-z0-9']+", t.lower()))   # words as a set
+
+    kept_texts = []
+    kept_word_sets = []
+    for text in texts:
+        word_set = words(text)
+        duplicate = False
+        for seen in kept_word_sets:
+            union = word_set | seen                          # | = all words together
+            if len(union) == 0 or len(word_set & seen) / len(union) >= 0.5:
+                duplicate = True
+                break                                        # stop checking
+        if not duplicate:
+            kept_texts.append(text)
+            kept_word_sets.append(word_set)
+    return kept_texts
 
 
 if __name__ == '__main__' :
