@@ -32,7 +32,7 @@ def html_to_text(html) -> str:
     if isinstance(html, bytes):
         html = html.decode('utf-8', errors='ignore')
 
-    # use beqautifulsoup? check guidebook
+    # use beqautifulsoup check guidebook
     soup = BeautifulSoup(html, 'html.parser')
 
     # delete tags whose contents are not article text?
@@ -55,7 +55,11 @@ def replace_pii(text: str) -> str:
     """
     # Replace US social security numbers (XXX-XX-XXXX format)
     text = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', 'XXX-XX-XXXX', text)
+    # find three digits, a dash, two digits, a dash, four digits, and replace it with XXX-XX-XXXX
+    # r : \b is a roaw string, need to reach regex engine
+    # b asserts "there is a word boundary here", at the start/end of a token
     text = re.sub(r'\+1\d{10}\b', '+' + 'X' * 11, text)
+    # a +1 phone number followed by 10 digits
     return text
     # do we need this as well?
     # pass 
@@ -74,7 +78,8 @@ def clean_text(text: str) -> str:
         if re.search(r'[A-Za-z0-9]{101,}', paragraph):
             continue                                         # junk? -> skip
         if not any(char in string.punctuation for char in paragraph):
-            continue                                         # no punctuation -> skip
+            # punctuation = r"""!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
+            continue                                         
         kept.append(paragraph)                               
     return "\n".join(kept)         
     # pass
@@ -88,7 +93,7 @@ def heuristic_quality_filter(text: str) -> bool:
         bool: returns True if the document passes the filters, False otherwise.
     """
     # pass 
-        # gate 1: bad words? isn't this checked in clean_text? but we can check again
+    # gate 1: bad words? isn't this checked in clean_text? but we can check again
     lowered = text.lower()
     for bad_word in retrieve_bad_words():
         if bad_word in lowered:
@@ -124,7 +129,7 @@ def is_english_text(text: str) -> bool:
         return False
 
     ascii_letters = sum(1 for c in letters if ord(c) < 128)
-    if ascii_letters / len(letters) < 0.8:              # not Latin script
+    if ascii_letters / len(letters) < 0.8:              # latin letters are less than 80% of all letters
         return False
 
     words = re.findall(r"[A-Za-z']+", text)

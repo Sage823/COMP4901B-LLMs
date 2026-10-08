@@ -24,6 +24,8 @@ class Tokenizer:
         self.bos_id: int = self.sp_model.bos_id()
         self.eos_id: int = self.sp_model.eos_id()
         # Overwrite the default of pad_id=-1, which is problematic.
+        # asked:SentencePiece returns −1 when a token does not exist, and −1 used as an array index in Python silently means "the last element" 
+        # this is not what we want, we want to use the <0x00> token as the padding token
         self.pad_id: int = self.sp_model.piece_to_id("<0x00>")
         #print(f"#words: {self.n_words} - BOS ID: {self.bos_id} - EOS ID: {self.eos_id}")
         assert self.sp_model.vocab_size() == self.sp_model.get_piece_size()
