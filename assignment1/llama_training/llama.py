@@ -324,7 +324,8 @@ class Llama(LlamaPreTrainedModel):
                     # pass
                     k = min(top_k, logits_work.size(-1))  # Ensure k does not exceed vocab size
                     top_values, _ = torch.topk(logits_work, k, dim=-1)
-                    logits_work = logits_work.masked_fill(logits_work < top_values[:, [-1]], float('-inf'))
+                    kth_value = top_values[:, [-1]] # this is the cutoff value for the top-k logits
+                    logits_work = logits_work.masked_fill(logits_work < kth_value, float('-inf'))
                     # ====================== Implement top-k sampling here ======================
 
                 #TODO
