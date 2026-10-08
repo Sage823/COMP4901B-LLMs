@@ -101,16 +101,23 @@ class Attention(nn.Module):
         #TODO
         # ====================== Implement compute_query_key_value_scores here ======================
         # pass
-        # why swap the last two axis? 
+
+        # attention scores
+        # why swap the last two axis? because we need dot product between query and key ! important!
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.head_dim)
 
-        # create a mask
         seqlen = query.size(2)
+        # or scores.size(-1)
+
+        # mask the upper triangle part, to mask the future tokens
         mask = torch.triu(torch.ones(seqlen, seqlen, dtype=torch.bool, device=query.device), diagonal=1)
         scores = scores.masked_fill(mask, float('-inf'))
 
+        # sum up rows : keys
         weights = F.softmax(scores, dim=-1)
+        # dropout to prevent overfitting
         weights = self.attn_dropout(weights)
+        # self.attn_dropout = nn.Dropout(config.dropout) defined
 
         return torch.matmul(weights, value)
 
