@@ -37,7 +37,7 @@ python train_hw_parallel.py \
     --report_to "none" \
     --run_name ${RUNNAME} \
     --bf16 False \
-    --fp16 True \
+    --fp16 False \
     --flash_attn False \
     --dataloader_num_workers 2 \
     --preprocess_workers 2 \
