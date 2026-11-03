@@ -34,9 +34,10 @@ python train_hw_parallel.py \
     --do_eval False \
     --model_max_length 2048 \
     --lazy_preprocess True \
-    --report_to "wandb" \
+    --report_to "none" \
     --run_name ${RUNNAME} \
-    --bf16 True \
+    --bf16 False \
+    --fp16 True \
     --flash_attn False \
     --dataloader_num_workers 2 \
     --preprocess_workers 2 \
