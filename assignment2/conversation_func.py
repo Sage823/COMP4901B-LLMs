@@ -94,11 +94,15 @@ def conversation_to_features(
         # messages: List[Dict[str, str]],
         assistant_positions = [
             idx for idx, msg in enumerate(messages) if msg["role"] == "assistant"
+            # find assistant messages
         ]
         for idx in assistant_positions:
             start = prefix_lengths[idx - 1] if idx > 0 else 0
             end = min(prefix_lengths[idx], len(full_ids))
+
             labels[start:end] = full_ids[start:end]
+            # fill assistant tokens into labels...
+            # it's so tiring watching the sft so it does not disconnect, so I am randomly commenting out the work
 
         # ruth
 
