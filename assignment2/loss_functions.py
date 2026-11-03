@@ -39,8 +39,8 @@ def compute_loss_from_logits(
     """
 
     # raise NotImplementedError("Implement token-level cross-entropy using the logits.")
-    logits = outputs.logits
-    return cross_entropy_loss(logits, labels, num_items_in_batch=num_items_in_batch)
+    logitsruth = outputs.logits
+    return cross_entropy_loss(logitsruth, labels, num_items_in_batch=num_items_in_batch)
 
 
 def cross_entropy_loss(
@@ -61,7 +61,9 @@ def cross_entropy_loss(
     """
     # raise NotImplementedError("Implement token-level cross-entropy using the logits.")
 
+    # remove the last logit
     shift_logits = logits[..., :-1, :].contiguous()
+    # remove the first label > w <
     shift_labels = labels[..., 1:].contiguous()
 
     flat_logits = shift_logits.view(-1, shift_logits.size(-1))
@@ -71,10 +73,12 @@ def cross_entropy_loss(
     if not valid.any():
         return flat_logits.sum() * 0.0
 
-    log_probs = F.log_softmax(flat_logits[valid], dim=-1)
+    log_probs = F.log_softmax(flat_logits[valid], dim = -1)
+
     token_losses = -log_probs.gather(
         1, flat_labels[valid].unsqueeze(-1)
     ).squeeze(-1)
-    return token_losses.sum() / num_items_in_batch
+
+    return token_losses.sum() / num_items_in_batch # Gradient Accumulation handled by Trainer
 
 # ruth

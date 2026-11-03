@@ -168,6 +168,8 @@ def reverse_conversation_to_features(
             end = min(prefix_lengths[idx], len(full_ids))
             labels[start:end] = full_ids[start:end]
 
+        # same as before assistant
+
         # ruth
 
     else:
