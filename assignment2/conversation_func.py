@@ -4,6 +4,10 @@ Homework helper functions for building loss masks from conversations.
 
 Students implement `conversation_to_features` below, and can run this module
 directly to inspect the features produced for the prepared exercise samples.
+
+source /homes/rguoan/miniconda3/etc/profile.d/conda.sh
+conda activate comp4901b-hw2
+
 """
 
 from __future__ import annotations
