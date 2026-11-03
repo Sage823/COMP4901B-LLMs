@@ -59,4 +59,22 @@ def cross_entropy_loss(
     Returns:
         Scalar tensor representing the mean loss over non-ignored tokens.
     """
-    raise NotImplementedError("Implement token-level cross-entropy using the logits.")
+    # raise NotImplementedError("Implement token-level cross-entropy using the logits.")
+
+    shift_logits = logits[..., :-1, :].contiguous()
+    shift_labels = labels[..., 1:].contiguous()
+
+    flat_logits = shift_logits.view(-1, shift_logits.size(-1))
+    flat_labels = shift_labels.view(-1)
+    valid = flat_labels != IGNORE_TOKEN_ID
+
+    if not valid.any():
+        return flat_logits.sum() * 0.0
+
+    log_probs = F.log_softmax(flat_logits[valid], dim=-1)
+    token_losses = -log_probs.gather(
+        1, flat_labels[valid].unsqueeze(-1)
+    ).squeeze(-1)
+    return token_losses.sum() / num_items_in_batch
+
+# ruth

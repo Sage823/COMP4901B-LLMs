@@ -89,7 +89,19 @@ def conversation_to_features(
         #   - `prefix_lengths[i]` gives the token count up through
         #     `messages[i]`.
         #
-        raise NotImplementedError("Exercise 1: implement the single-turn loss mask.")
+        # raise NotImplementedError("Exercise 1: implement the single-turn loss mask.")
+
+        # messages: List[Dict[str, str]],
+        assistant_positions = [
+            idx for idx, msg in enumerate(messages) if msg["role"] == "assistant"
+        ]
+        for idx in assistant_positions:
+            start = prefix_lengths[idx - 1] if idx > 0 else 0
+            end = min(prefix_lengths[idx], len(full_ids))
+            labels[start:end] = full_ids[start:end]
+
+        # ruth
+
     else:
         # ------------------------------------------------------------------
         # Exercise 2: Multi-turn loss mask
@@ -112,7 +124,16 @@ def conversation_to_features(
         #   - The code that follows assumes `labels` already reflect your
         #     masking decisions.
         #
-        raise NotImplementedError("Exercise 2: extend the loss mask to multi-turn conversations.")
+        # raise NotImplementedError("Exercise 2: extend the loss mask to multi-turn conversations.")
+        previous_end = 0
+
+        for idx, msg in enumerate(messages):
+            current_end = min(prefix_lengths[idx], len(full_ids))
+            if msg["role"] == "assistant":
+                labels[previous_end:current_end] = full_ids[previous_end:current_end]
+            previous_end = current_end
+
+        # ruth
 
     if len(full_ids) > max_length:
         if truncation == "left":
